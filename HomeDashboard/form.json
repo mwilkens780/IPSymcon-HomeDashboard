@@ -1,0 +1,63 @@
+{
+  "elements": [
+    {
+      "type": "List",
+      "name": "tiles",
+      "caption": "Kacheln",
+      "rowCount": 12,
+      "add": true,
+      "delete": true,
+      "columns": [
+        { "caption": "Name", "name": "name", "width": "170px", "add": "", "edit": { "type": "ValidationTextBox" } },
+        { "caption": "Variable/Instanz", "name": "variable", "width": "190px", "add": 0, "edit": { "type": "SelectVariable" } },
+        { "caption": "Skript (nur Auslöser)", "name": "script", "width": "170px", "add": 0, "edit": { "type": "SelectScript" } },
+        {
+          "caption": "Typ",
+          "name": "type",
+          "width": "150px",
+          "add": "value",
+          "edit": {
+            "type": "Select",
+            "options": [
+              { "caption": "Wert (+ Diagramm)", "value": "value" },
+              { "caption": "Ja/Nein-Status", "value": "bool" },
+              { "caption": "Schalter", "value": "toggle" },
+              { "caption": "Auslöser (Skript)", "value": "action" },
+              { "caption": "Text", "value": "string" },
+              { "caption": "HTML", "value": "html" }
+            ]
+          }
+        }
+      ],
+      "values": []
+    },
+    {
+      "type": "Label",
+      "caption": "'Variable/Instanz' akzeptiert auch Link-Objekte (funktioniert transparent) sowie bei 'Schalter' eine Hue/Govee-Lampeninstanz statt der rohen Variable. Anzeige-Text und Farbe bei 'Wert'/'Ja-Nein' kommen automatisch aus dem Variablenprofil (GetValueFormatted/Profil-Assoziationsfarbe) -- keine weitere Konfiguration nötig. 'Auslöser' braucht nur das Skript-Feld."
+    },
+    {
+      "type": "SelectInstance",
+      "name": "archive_instance",
+      "caption": "Archiv-Instanz (für Diagramme bei 'Wert')"
+    },
+    {
+      "type": "NumberSpinner",
+      "name": "update_interval",
+      "caption": "Aktualisierungsintervall (Sekunden)",
+      "minimum": 10,
+      "suffix": "s"
+    }
+  ],
+  "actions": [
+    {
+      "type": "Button",
+      "caption": "Jetzt aktualisieren",
+      "onClick": "HMD_Refresh($id);"
+    }
+  ],
+  "status": [
+    { "code": 102, "icon": "active",   "caption": "Aktiv" },
+    { "code": 200, "icon": "error",    "caption": "Fehler – Details im IPS-Log" },
+    { "code": 201, "icon": "inactive", "caption": "Nicht konfiguriert – mindestens eine Kachel hinzufügen" }
+  ]
+}

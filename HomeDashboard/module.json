@@ -1,0 +1,12 @@
+{
+    "id": "{14ABA9AF-C7FD-4ED9-8AA3-B74DDC47DF4C}",
+    "name": "Home Dashboard",
+    "type": 3,
+    "vendor": "Martin Wilkens",
+    "aliases": [],
+    "dependencies": [],
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "HMD"
+}
