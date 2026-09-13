@@ -34,6 +34,11 @@ class HomeDashboard extends IPSModule
      * Der Nutzer kann Zeilen jederzeit entfernen/ergaenzen.
      */
     private const DEFAULT_TILES = [
+        ['name' => 'Zuhause (alle)',           'variable' => 15106, 'script' => 0,     'type' => 'bool'],
+        ['name' => 'Anwesend: Martin',         'variable' => 42942, 'script' => 0,     'type' => 'bool'],
+        ['name' => 'Anwesend: Lydia',          'variable' => 26353, 'script' => 0,     'type' => 'bool'],
+        ['name' => 'Anwesend: Lukas',          'variable' => 33952, 'script' => 0,     'type' => 'bool'],
+        ['name' => 'Anwesend: Elina',          'variable' => 56923, 'script' => 0,     'type' => 'bool'],
         ['name' => 'Erdgeschoss Licht',        'variable' => 44101, 'script' => 0,     'type' => 'toggle'],
         ['name' => 'Obergeschoss Licht',       'variable' => 34031, 'script' => 0,     'type' => 'toggle'],
         ['name' => 'Bewässerung',              'variable' => 0,     'script' => 19701, 'type' => 'action'],
