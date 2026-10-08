@@ -393,28 +393,31 @@ body{overflow-y:auto;overflow-x:hidden;font-family:-apple-system,BlinkMacSystemF
 .header{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:13px;font-weight:600;border-bottom:1px solid #1e3a5f;padding-bottom:5px;flex:none}
 .updated{font-size:10px;color:#3a5a7a;font-weight:400}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));grid-auto-flow:row dense;gap:7px;align-items:stretch}
-.tile{background:#131f33;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;justify-content:center;gap:3px;min-height:0}
-.tile-name{font-size:10.5px;color:#8aa8c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile{background:#131f33;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;justify-content:center;gap:4px;min-height:0}
+.tile-name{font-size:10.5px;color:#8aa8c8;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.25;overflow-wrap:anywhere}
 .tile-value{font-size:19px;font-weight:600;color:#d0e8ff;line-height:1.15}
 .tile-chart{margin-top:1px}
 .tile-chart svg{width:100%;height:24px;display:block}
 .tile-row{display:flex;align-items:center;justify-content:space-between;gap:6px}
 .tile-text{font-size:14px;color:#d0e8ff}
-/* Kompakte, einzeilige Kacheln fuer Status/Text (Bool/String) -- keine verschachtelte Box, Farbe direkt am Text. */
-.tile-compact{flex-direction:row;align-items:center;justify-content:space-between;padding:9px 12px}
-.tile-compact .tile-name{font-size:12px;overflow:visible;white-space:normal}
-.tile-status{font-size:13px;font-weight:600;color:#8aa8c8;white-space:nowrap;flex:none;margin-left:8px}
+/* Kompakte Kacheln fuer Status/Text (Bool/String) -- keine verschachtelte Box, Farbe direkt am Text.
+   Name oben (bis zu 2 Zeilen), Status darunter -- nicht nebeneinander, damit lange Werte wie
+   "Nicht ausgelöst" nie aus der Kachel herauslaufen. */
+.tile-compact{padding:9px 12px;gap:2px}
+.tile-compact .tile-name{font-size:11.5px}
+.tile-status{font-size:13px;font-weight:600;color:#8aa8c8;overflow-wrap:anywhere}
 /* Klickbare Kacheln (Schalter/Ausloeser): die ganze Flaeche ist der Button, kein eingebetteter Zweit-Button. */
 .tile.clickable{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;transition:background-color .15s,transform .08s;border:1px solid #1e3a5f}
 .tile.clickable:active{transform:scale(.97)}
-.tile.toggle-tile{flex-direction:row;align-items:center;justify-content:space-between;padding:10px 12px}
+.tile.toggle-tile{padding:10px 12px;min-height:58px}
+.tile.toggle-tile .tile-row{margin-top:auto}
 .tile.toggle-tile .tile-icon{font-size:15px;color:#4a6a8a;flex:none;transition:color .15s}
 .tile.toggle-tile.on{background:#12405a;border-color:#2a7aa0}
 .tile.toggle-tile.on .tile-icon{color:#7ec8f0}
 .tile.toggle-tile.on .tile-status{color:#d0e8ff}
 .tile.action-tile{align-items:center;justify-content:center;text-align:center;gap:6px;background:#12405a;border-color:#2a7aa0;min-height:72px}
 .tile.action-tile .tile-icon{font-size:22px;color:#7ec8f0}
-.tile.action-tile .tile-name{font-size:11px;color:#9fc8e8}
+.tile.action-tile .tile-name{font-size:11px;color:#9fc8e8;-webkit-line-clamp:2}
 .tile.action-tile:active{background:#17547a}
 .tile-html{grid-column:1 / -1;background:#131f33;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:4px}
 .tile-html iframe{width:100%;border:0;min-height:100px;border-radius:6px}
