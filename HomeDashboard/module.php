@@ -375,26 +375,35 @@ class HomeDashboard extends IPSModule
 <style>
 html{height:100%}
 *{box-sizing:border-box;margin:0;padding:0}
-body{overflow-y:auto;overflow-x:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;background:#0d1b2a;color:#d0e8ff;display:flex;flex-direction:column;padding:10px;gap:10px}
-.header{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:14px;font-weight:600;border-bottom:1px solid #1e3a5f;padding-bottom:6px;flex:none}
+body{overflow-y:auto;overflow-x:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;background:#0d1b2a;color:#d0e8ff;display:flex;flex-direction:column;padding:8px;gap:8px}
+.header{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:13px;font-weight:600;border-bottom:1px solid #1e3a5f;padding-bottom:5px;flex:none}
 .updated{font-size:10px;color:#3a5a7a;font-weight:400}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tile{background:#131f33;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px;min-height:60px}
-.tile-name{font-size:11px;color:#8aa8c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tile-value{font-size:22px;font-weight:600;color:#d0e8ff}
-.tile-chart svg{width:100%;height:36px;display:block}
-.badge{align-self:flex-start;padding:4px 10px;border-radius:12px;font-size:13px;font-weight:600;background:#1a2535;border:1px solid #2a3a50}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));grid-auto-flow:row dense;gap:7px;align-items:stretch}
+.tile{background:#131f33;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;justify-content:center;gap:3px;min-height:0}
+.tile-name{font-size:10.5px;color:#8aa8c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile-value{font-size:19px;font-weight:600;color:#d0e8ff;line-height:1.15}
+.tile-chart{margin-top:1px}
+.tile-chart svg{width:100%;height:24px;display:block}
 .tile-row{display:flex;align-items:center;justify-content:space-between;gap:6px}
-.toggle{position:relative;width:38px;height:22px;flex:none;display:inline-block}
-.toggle input{opacity:0;position:absolute;width:100%;height:100%;margin:0;cursor:pointer;z-index:1}
-.toggle-track{position:absolute;inset:0;background:#1a2535;border:1px solid #2a3a50;border-radius:11px;transition:.15s}
-.toggle-thumb{position:absolute;top:1px;left:1px;width:16px;height:16px;background:#8aa8c8;border-radius:50%;transition:.15s}
-.toggle input:checked ~ .toggle-track{background:#12405a;border-color:#2a7aa0}
-.toggle input:checked ~ .toggle-track .toggle-thumb{transform:translateX(16px);background:#7ec8f0}
-.action-btn{align-self:center;width:52px;height:52px;border-radius:50%;background:#12405a;border:1px solid #2a7aa0;color:#7ec8f0;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.tile-text{font-size:16px;color:#d0e8ff}
+.tile-text{font-size:14px;color:#d0e8ff}
+/* Kompakte, einzeilige Kacheln fuer Status/Text (Bool/String) -- keine verschachtelte Box, Farbe direkt am Text. */
+.tile-compact{flex-direction:row;align-items:center;justify-content:space-between;padding:9px 12px}
+.tile-compact .tile-name{font-size:12px;overflow:visible;white-space:normal}
+.tile-status{font-size:13px;font-weight:600;color:#8aa8c8;white-space:nowrap;flex:none;margin-left:8px}
+/* Klickbare Kacheln (Schalter/Ausloeser): die ganze Flaeche ist der Button, kein eingebetteter Zweit-Button. */
+.tile.clickable{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;transition:background-color .15s,transform .08s;border:1px solid #1e3a5f}
+.tile.clickable:active{transform:scale(.97)}
+.tile.toggle-tile{flex-direction:row;align-items:center;justify-content:space-between;padding:10px 12px}
+.tile.toggle-tile .tile-icon{font-size:15px;color:#4a6a8a;flex:none;transition:color .15s}
+.tile.toggle-tile.on{background:#12405a;border-color:#2a7aa0}
+.tile.toggle-tile.on .tile-icon{color:#7ec8f0}
+.tile.toggle-tile.on .tile-status{color:#d0e8ff}
+.tile.action-tile{align-items:center;justify-content:center;text-align:center;gap:6px;background:#12405a;border-color:#2a7aa0;min-height:72px}
+.tile.action-tile .tile-icon{font-size:22px;color:#7ec8f0}
+.tile.action-tile .tile-name{font-size:11px;color:#9fc8e8}
+.tile.action-tile:active{background:#17547a}
 .tile-html{grid-column:1 / -1;background:#131f33;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:4px}
-.tile-html iframe{width:100%;border:0;min-height:140px;border-radius:6px}
+.tile-html iframe{width:100%;border:0;min-height:100px;border-radius:6px}
 </style>
 </head>
 <body>
@@ -422,13 +431,24 @@ function updateTile(t) {
     if (poly && t.chart) poly.setAttribute('points', t.chart);
   }
   if (t.type === 'bool') {
-    var badge = document.getElementById(t.ident + '_badge');
-    if (badge) badge.style.color = t.color || '#8aa8c8';
+    var statusEl = document.getElementById(t.ident + '_val');
+    if (statusEl) statusEl.style.color = t.color || '#8aa8c8';
   }
   if (t.type === 'toggle') {
     var input = document.getElementById(t.ident + '_input');
     if (input) input.checked = t.checked;
+    var card = document.getElementById(t.ident + '_card');
+    if (card) card.classList.toggle('on', !!t.checked);
   }
+}
+
+function toggleTile(ident) {
+  var input = document.getElementById(ident + '_input');
+  var card = document.getElementById(ident + '_card');
+  var next = input ? !input.checked : true;
+  if (input) input.checked = next;
+  if (card) card.classList.toggle('on', next);
+  requestAction(ident + '_toggle', next);
 }
 
 window.handleMessage = function(raw) {
@@ -464,26 +484,29 @@ HTML;
             case 'bool':
                 $textEsc = htmlspecialchars($tile['text'], ENT_QUOTES);
                 $color   = $tile['color'] ?? '#8aa8c8';
-                return "<div class=\"tile\"><div class=\"tile-name\">{$nameEsc}</div><span id='{$ident}_badge' class=\"badge\" style=\"color:{$color}\"><span id='{$ident}_val'>{$textEsc}</span></span></div>";
+                return "<div class=\"tile tile-compact\"><span class=\"tile-name\">{$nameEsc}</span><span id='{$ident}_val' class=\"tile-status\" style=\"color:{$color}\">{$textEsc}</span></div>";
 
             case 'toggle':
-                $textEsc = htmlspecialchars($tile['text'], ENT_QUOTES);
-                $checked = $tile['checked'] ? ' checked' : '';
+                $textEsc  = htmlspecialchars($tile['text'], ENT_QUOTES);
+                $checked  = $tile['checked'] ? ' checked' : '';
+                $onClass  = $tile['checked'] ? ' on' : '';
                 return <<<HTML
-<div class="tile">
-  <div class="tile-row"><span class="tile-name">{$nameEsc}</span>
-    <label class="toggle"><input id='{$ident}_input' type="checkbox"{$checked} onchange="requestAction('{$ident}_toggle', this.checked)"><span class="toggle-track"><span class="toggle-thumb"></span></span></label>
-  </div>
-  <span id='{$ident}_val' class="tile-text">{$textEsc}</span>
+<div class="tile clickable toggle-tile{$onClass}" id="{$ident}_card" onclick="toggleTile('{$ident}')">
+  <span class="tile-name">{$nameEsc}</span>
+  <span class="tile-row" style="gap:8px">
+    <span id='{$ident}_val' class="tile-status">{$textEsc}</span>
+    <span class="tile-icon">⏻</span>
+  </span>
+  <input id='{$ident}_input' type="checkbox"{$checked} style="display:none">
 </div>
 HTML;
 
             case 'action':
-                return "<div class=\"tile\"><div class=\"tile-name\">{$nameEsc}</div><button type=\"button\" class=\"action-btn\" onclick=\"requestAction('{$ident}_action', 1)\">▶</button></div>";
+                return "<div class=\"tile clickable action-tile\" onclick=\"requestAction('{$ident}_action', 1)\"><span class=\"tile-icon\">▶</span><span class=\"tile-name\">{$nameEsc}</span></div>";
 
             case 'string':
                 $textEsc = htmlspecialchars($tile['text'], ENT_QUOTES);
-                return "<div class=\"tile\"><div class=\"tile-name\">{$nameEsc}</div><div id='{$ident}_val' class=\"tile-text\">{$textEsc}</div></div>";
+                return "<div class=\"tile tile-compact\"><span class=\"tile-name\">{$nameEsc}</span><span id='{$ident}_val' class=\"tile-status\">{$textEsc}</span></div>";
 
             case 'html':
                 $srcDoc = htmlspecialchars($tile['html'], ENT_QUOTES);
