@@ -24,7 +24,8 @@
               { "caption": "Schalter", "value": "toggle" },
               { "caption": "Auslöser (Skript)", "value": "action" },
               { "caption": "Text", "value": "string" },
-              { "caption": "HTML", "value": "html" }
+              { "caption": "HTML", "value": "html" },
+              { "caption": "Gruppen-Überschrift", "value": "group" }
             ]
           }
         }
@@ -33,7 +34,7 @@
     },
     {
       "type": "Label",
-      "caption": "'Variable/Instanz' akzeptiert auch Link-Objekte (funktioniert transparent) sowie bei 'Schalter' eine Hue/Govee-Lampeninstanz statt der rohen Variable. Anzeige-Text und Farbe bei 'Wert'/'Ja-Nein' kommen automatisch aus dem Variablenprofil (GetValueFormatted/Profil-Assoziationsfarbe) -- keine weitere Konfiguration nötig. 'Auslöser' braucht nur das Skript-Feld."
+      "caption": "'Variable/Instanz' akzeptiert auch Link-Objekte (funktioniert transparent) sowie bei 'Schalter' eine Hue/Govee-Lampeninstanz statt der rohen Variable. Anzeige-Text und Farbe bei 'Wert'/'Ja-Nein' kommen automatisch aus dem Variablenprofil (GetValueFormatted/Profil-Assoziationsfarbe) -- keine weitere Konfiguration nötig. 'Auslöser' braucht nur das Skript-Feld. 'Gruppen-Überschrift' braucht nur den Namen (z.B. 'Wetter') und fügt eine Zwischenüberschrift über volle Breite ein. Reihenfolge der Kacheln per Drag am Zeilen-Anfasser in der Liste änderbar."
     },
     {
       "type": "SelectInstance",
