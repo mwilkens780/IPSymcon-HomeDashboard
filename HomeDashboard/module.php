@@ -34,11 +34,11 @@ class HomeDashboard extends IPSModule
      * Der Nutzer kann Zeilen jederzeit entfernen/ergaenzen.
      */
     private const DEFAULT_TILES = [
-        ['name' => 'Zuhause (alle)',           'variable' => 15106, 'script' => 0,     'type' => 'bool'],
-        ['name' => 'Anwesend: Martin',         'variable' => 42942, 'script' => 0,     'type' => 'bool'],
-        ['name' => 'Anwesend: Lydia',          'variable' => 26353, 'script' => 0,     'type' => 'bool'],
-        ['name' => 'Anwesend: Lukas',          'variable' => 33952, 'script' => 0,     'type' => 'bool'],
-        ['name' => 'Anwesend: Elina',          'variable' => 56923, 'script' => 0,     'type' => 'bool'],
+        ['name' => 'Zuhause (alle)',           'variable' => 15106, 'script' => 0,     'type' => 'toggle'],
+        ['name' => 'Anwesend: Martin',         'variable' => 42942, 'script' => 0,     'type' => 'toggle'],
+        ['name' => 'Anwesend: Lydia',          'variable' => 26353, 'script' => 0,     'type' => 'toggle'],
+        ['name' => 'Anwesend: Lukas',          'variable' => 33952, 'script' => 0,     'type' => 'toggle'],
+        ['name' => 'Anwesend: Elina',          'variable' => 56923, 'script' => 0,     'type' => 'toggle'],
         ['name' => 'Erdgeschoss Licht',        'variable' => 44101, 'script' => 0,     'type' => 'toggle'],
         ['name' => 'Obergeschoss Licht',       'variable' => 34031, 'script' => 0,     'type' => 'toggle'],
         ['name' => 'Bewässerung',              'variable' => 0,     'script' => 19701, 'type' => 'action'],
@@ -129,6 +129,15 @@ class HomeDashboard extends IPSModule
         }
     }
 
+    /**
+     * Schaltet die Zielvariable. Lampen/Geraete haben normalerweise eine
+     * registrierte Action (RequestAction greift). Reine Status-/virtuelle
+     * Variablen ohne Action (z.B. Anwesenheits-Flags, die sonst nur von
+     * einem Skript per SetValue gesetzt werden) haben das nicht -- dafuer
+     * direkt den Wert schreiben, analog zur HM_WriteValue*-Erkenntnis im
+     * Room Dashboard: SetValueBoolean ist ein reiner Kernel-Write ohne
+     * Action-Pruefung und somit fuer virtuelle Variablen immer gueltig.
+     */
     private function forwardToggle(int $index, bool $value): void
     {
         $tiles  = json_decode($this->ReadPropertyString('tiles'), true) ?: [];
@@ -137,7 +146,12 @@ class HomeDashboard extends IPSModule
         if ($target <= 0) {
             return;
         }
-        RequestAction($target, $value);
+        $variable = @IPS_GetVariable($target);
+        if ($variable !== false && (int) $variable['VariableAction'] > 0) {
+            RequestAction($target, $value);
+            return;
+        }
+        SetValueBoolean($target, $value);
     }
 
     private function forwardAction(int $index): void
