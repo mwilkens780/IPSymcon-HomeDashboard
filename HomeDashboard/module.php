@@ -34,21 +34,30 @@ class HomeDashboard extends IPSModule
      * Der Nutzer kann Zeilen jederzeit entfernen/ergaenzen.
      */
     private const DEFAULT_TILES = [
+        ['name' => 'Anwesenheit',              'variable' => 0,     'script' => 0,     'type' => 'group'],
         ['name' => 'Zuhause (alle)',           'variable' => 15106, 'script' => 0,     'type' => 'toggle'],
         ['name' => 'Anwesend: Martin',         'variable' => 42942, 'script' => 0,     'type' => 'toggle'],
         ['name' => 'Anwesend: Lydia',          'variable' => 26353, 'script' => 0,     'type' => 'toggle'],
         ['name' => 'Anwesend: Lukas',          'variable' => 33952, 'script' => 0,     'type' => 'toggle'],
         ['name' => 'Anwesend: Elina',          'variable' => 56923, 'script' => 0,     'type' => 'toggle'],
+
+        ['name' => 'Steuerung',                'variable' => 0,     'script' => 0,     'type' => 'group'],
         ['name' => 'Erdgeschoss Licht',        'variable' => 44101, 'script' => 0,     'type' => 'toggle'],
         ['name' => 'Obergeschoss Licht',       'variable' => 34031, 'script' => 0,     'type' => 'toggle'],
         ['name' => 'Bewässerung',              'variable' => 0,     'script' => 19701, 'type' => 'action'],
+
+        ['name' => 'Energie',                  'variable' => 0,     'script' => 0,     'type' => 'group'],
         ['name' => 'Stromverbrauch',           'variable' => 14487, 'script' => 0,     'type' => 'value'],
         ['name' => 'Leistung Solar',           'variable' => 22328, 'script' => 0,     'type' => 'value'],
+
+        ['name' => 'Wetter',                   'variable' => 0,     'script' => 0,     'type' => 'group'],
         ['name' => 'Außentemperatur',          'variable' => 30589, 'script' => 0,     'type' => 'value'],
         ['name' => 'Regen heute',              'variable' => 42136, 'script' => 0,     'type' => 'value'],
         ['name' => 'Sonnenschein heute',       'variable' => 48955, 'script' => 0,     'type' => 'value'],
         ['name' => 'Aktueller Niederschlag',   'variable' => 10262, 'script' => 0,     'type' => 'bool'],
         ['name' => 'Aktueller Sonnenschein',   'variable' => 22740, 'script' => 0,     'type' => 'bool'],
+
+        ['name' => 'Alarme',                   'variable' => 0,     'script' => 0,     'type' => 'group'],
         ['name' => 'Batterie-Alarm',           'variable' => 51665, 'script' => 0,     'type' => 'bool'],
         ['name' => 'Feuer-Alarm',              'variable' => 51344, 'script' => 0,     'type' => 'bool'],
         ['name' => 'Geräte-Status',            'variable' => 46955, 'script' => 0,     'type' => 'bool'],
@@ -58,6 +67,8 @@ class HomeDashboard extends IPSModule
         ['name' => 'Fensteröffnung unten',     'variable' => 45202, 'script' => 0,     'type' => 'bool'],
         ['name' => 'Fensteröffnung oben',      'variable' => 58303, 'script' => 0,     'type' => 'bool'],
         ['name' => 'Wasser-Alarm',             'variable' => 51828, 'script' => 0,     'type' => 'bool'],
+
+        ['name' => 'Sonstiges',                'variable' => 0,     'script' => 0,     'type' => 'group'],
         ['name' => 'Ferien',                   'variable' => 18598, 'script' => 0,     'type' => 'string'],
         ['name' => 'Warnmeldungen',            'variable' => 28250, 'script' => 0,     'type' => 'html'],
     ];
@@ -392,7 +403,9 @@ html{height:100%}
 body{overflow-y:auto;overflow-x:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;background:#0d1b2a;color:#d0e8ff;display:flex;flex-direction:column;padding:8px;gap:8px}
 .header{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:13px;font-weight:600;border-bottom:1px solid #1e3a5f;padding-bottom:5px;flex:none}
 .updated{font-size:10px;color:#3a5a7a;font-weight:400}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));grid-auto-flow:row dense;gap:7px;align-items:stretch}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px;align-items:stretch}
+.group-header{grid-column:1 / -1;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#7ec8f0;border-bottom:1px solid #1e3a5f;padding:4px 2px 3px;margin-top:4px}
+.group-header:first-child{margin-top:0}
 .tile{background:#131f33;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;justify-content:center;gap:4px;min-height:0}
 .tile-name{font-size:10.5px;color:#8aa8c8;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.25;overflow-wrap:anywhere}
 .tile-value{font-size:19px;font-weight:600;color:#d0e8ff;line-height:1.15}
@@ -491,6 +504,9 @@ HTML;
         $type    = $tile['type'];
 
         switch ($type) {
+            case 'group':
+                return "<div class=\"group-header\">{$nameEsc}</div>";
+
             case 'value':
                 $textEsc = htmlspecialchars($tile['text'], ENT_QUOTES);
                 $chart   = $tile['chart'] !== ''
