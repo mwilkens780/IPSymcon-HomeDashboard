@@ -254,8 +254,10 @@ class HomeDashboard extends IPSModule
                 $data['chart'] = $varId > 0 ? $this->chartSvgPoints($varId) : '';
                 break;
             case 'bool':
+                $value         = $varId > 0 ? (bool) GetValue($varId) : null;
                 $data['text']  = $varId > 0 ? $this->formattedValue($varId) : '–';
                 $data['color'] = $varId > 0 ? $this->associationColor($varId) : null;
+                $data['icon']  = $this->topicIcon($data['name'], $value);
                 break;
             case 'toggle':
                 $target          = $this->resolveToggleTarget((int) ($tile['variable'] ?? 0));
@@ -289,6 +291,34 @@ class HomeDashboard extends IPSModule
             return $raw ? 'Ja' : 'Nein';
         }
         return (string) $raw;
+    }
+
+    /**
+     * Dezentes Themen-Piktogramm fuer Ja/Nein-Kacheln, per Namens-Stichwort
+     * erkannt (kein eigenes Konfigurationsfeld noetig, funktioniert also
+     * auch fuer bereits bestehende Kacheln sofort) -- zwei Symbole je Thema,
+     * passend zum aktuellen Wahrheitswert. '' wenn kein Thema erkannt oder
+     * der Wert unbekannt ist.
+     */
+    private function topicIcon(string $name, ?bool $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+        $n = mb_strtolower($name);
+        if (str_contains($n, 'sonnenschein')) {
+            return $value ? '☀️' : '☁️';
+        }
+        if (str_contains($n, 'niederschlag') || (str_contains($n, 'regen') && !str_contains($n, 'wasser'))) {
+            return $value ? '🌧️' : '⛅';
+        }
+        if (str_contains($n, 'fenster')) {
+            return $value ? '🔓' : '🔒';
+        }
+        if (str_contains($n, 'alarm')) {
+            return $value ? '🚨' : '🔕';
+        }
+        return '';
     }
 
     /** Liest die Assoziationsfarbe des aktuellen Werts aus dem Variablenprofil (z.B. rot fuer "Alarm"), null wenn kein passendes/gefaerbtes Profil existiert. */
@@ -434,6 +464,7 @@ body{overflow-y:auto;overflow-x:hidden;font-family:-apple-system,BlinkMacSystemF
 .tile.action-tile:active{background:#17547a}
 .tile-html{grid-column:1 / -1;background:#131f33;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:4px}
 .tile-html iframe{width:100%;border:0;min-height:100px;border-radius:6px}
+.topic-icon{font-size:12px;margin-right:4px;opacity:.85;filter:grayscale(.15)}
 </style>
 </head>
 <body>
@@ -461,8 +492,9 @@ function updateTile(t) {
     if (poly && t.chart) poly.setAttribute('points', t.chart);
   }
   if (t.type === 'bool') {
-    var statusEl = document.getElementById(t.ident + '_val');
+    var statusEl = document.getElementById(t.ident + '_status');
     if (statusEl) statusEl.style.color = t.color || '#8aa8c8';
+    setText(t.ident + '_icon', t.icon || '');
   }
   if (t.type === 'toggle') {
     var input = document.getElementById(t.ident + '_input');
@@ -517,7 +549,8 @@ HTML;
             case 'bool':
                 $textEsc = htmlspecialchars($tile['text'], ENT_QUOTES);
                 $color   = $tile['color'] ?? '#8aa8c8';
-                return "<div class=\"tile tile-compact\"><span class=\"tile-name\">{$nameEsc}</span><span id='{$ident}_val' class=\"tile-status\" style=\"color:{$color}\">{$textEsc}</span></div>";
+                $iconEsc = htmlspecialchars($tile['icon'] ?? '', ENT_QUOTES);
+                return "<div class=\"tile tile-compact\"><span class=\"tile-name\">{$nameEsc}</span><span id='{$ident}_status' class=\"tile-status\" style=\"color:{$color}\"><span id='{$ident}_icon' class=\"topic-icon\">{$iconEsc}</span><span id='{$ident}_val'>{$textEsc}</span></span></div>";
 
             case 'toggle':
                 $textEsc  = htmlspecialchars($tile['text'], ENT_QUOTES);
