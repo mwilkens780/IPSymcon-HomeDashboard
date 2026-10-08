@@ -3,8 +3,8 @@
     "author": "Martin Wilkens",
     "name": "Home Dashboard",
     "description": "Modernes Übersichts-Dashboard für die Symcon-Hauptseite -- bündelt beliebige Root-Variablen/Instanzen (Werte mit Diagramm, Ja/Nein-Status, Schalter, Skript-Auslöser, Text, HTML) als einheitliche Kachel, statt vieler einzelner Symcon-Auto-Kacheln.",
-    "version": "1.3",
-    "build": 4,
-    "date": 1791878400,
+    "version": "1.4",
+    "build": 5,
+    "date": 1791964800,
     "url": "https://github.com/mwilkens780/IPSymcon-HomeDashboard"
 }
