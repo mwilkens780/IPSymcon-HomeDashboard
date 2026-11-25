@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../libs/TileKit.php';
+
 /**
  * Modernes Uebersichts-Dashboard fuer die Symcon-Hauptseite. Buendelt eine
  * frei konfigurierbare Liste von Root-Variablen/-Instanzen (die aktuell als
@@ -18,6 +20,8 @@ declare(strict_types=1);
  */
 class HomeDashboard extends IPSModule
 {
+    use \Fuchsbau\TileKit\HomeDashboard\TileKit;
+
     private const CHART_SPAN_SEC = 6 * 3600; // 6h, wie Weather/Energy/Heating Dashboard
 
     /** Bekannte "Lampen"-Modultypen und der Ident ihrer Ein/Aus-Variable, fuer den Schalter-Typ (siehe RoomDashboard::LIGHT_MODULE_IDENTS). */
@@ -113,7 +117,7 @@ class HomeDashboard extends IPSModule
     public function Refresh(): void
     {
         try {
-            $this->pushValue('__all__', $this->collectData());
+            $this->tkPush('__all__', $this->collectData());
             $this->SetStatus(102);
         } catch (\Throwable $e) {
             $this->LogMessage('HomeDashboard Refresh: ' . $e->getMessage(), KL_ERROR);
@@ -250,334 +254,90 @@ class HomeDashboard extends IPSModule
 
         switch ($type) {
             case 'value':
-                $data['text']  = $varId > 0 ? $this->formattedValue($varId) : '–';
-                $data['chart'] = $varId > 0 ? $this->chartSvgPoints($varId) : '';
+                $data['text']  = self::tkFormatted($varId);
+                $data['chart'] = $varId > 0 ? self::tkSparkline(self::tkHistory($this->ReadPropertyInteger('archive_instance'), $varId, self::CHART_SPAN_SEC), self::CHART_SPAN_SEC) : '';
                 break;
             case 'bool':
                 $value         = $varId > 0 ? (bool) GetValue($varId) : null;
-                $data['text']  = $varId > 0 ? $this->formattedValue($varId) : '–';
-                $data['color'] = $varId > 0 ? $this->associationColor($varId) : null;
-                $data['icon']  = $this->topicIcon($data['name'], $value);
+                $data['text']  = self::tkFormatted($varId);
+                $data['color'] = $varId > 0 ? self::tkAssocColor($varId) : null;
+                $data['icon']  = self::tkTopicIcon($data['name'], $value);
                 break;
             case 'toggle':
                 $target          = $this->resolveToggleTarget((int) ($tile['variable'] ?? 0));
                 $data['checked'] = $target > 0 ? (bool) GetValue($target) : false;
-                $data['text']    = $target > 0 ? $this->formattedValue($target) : '–';
+                $data['text']    = self::tkFormatted($target);
                 break;
             case 'action':
                 // reiner Ausloeser, nichts zu lesen
                 break;
             case 'string':
-                $data['text'] = $varId > 0 ? $this->formattedValue($varId) : '';
+                $data['text'] = self::tkFormatted($varId, '');
                 break;
             case 'html':
-                $data['html'] = $varId > 0 ? $this->darkThemeWrap((string) GetValue($varId)) : '';
+                $data['html'] = $varId > 0 ? (string) GetValue($varId) : '';
                 break;
         }
         return $data;
     }
 
-    private function formattedValue(int $varId): string
-    {
-        $formatted = @GetValueFormatted($varId);
-        if ($formatted !== false && $formatted !== null && $formatted !== '') {
-            return (string) $formatted;
-        }
-        $raw = @GetValue($varId);
-        if ($raw === false) {
-            return '–';
-        }
-        if (is_bool($raw)) {
-            return $raw ? 'Ja' : 'Nein';
-        }
-        return (string) $raw;
-    }
-
-    /**
-     * Dezentes Themen-Piktogramm fuer Ja/Nein-Kacheln, per Namens-Stichwort
-     * erkannt (kein eigenes Konfigurationsfeld noetig, funktioniert also
-     * auch fuer bereits bestehende Kacheln sofort) -- zwei Symbole je Thema,
-     * passend zum aktuellen Wahrheitswert. '' wenn kein Thema erkannt oder
-     * der Wert unbekannt ist.
-     */
-    private function topicIcon(string $name, ?bool $value): string
-    {
-        if ($value === null) {
-            return '';
-        }
-        $n = mb_strtolower($name);
-        if (str_contains($n, 'sonnenschein')) {
-            return $value ? '☀️' : '☁️';
-        }
-        if (str_contains($n, 'niederschlag') || (str_contains($n, 'regen') && !str_contains($n, 'wasser'))) {
-            return $value ? '🌧️' : '⛅';
-        }
-        if (str_contains($n, 'fenster')) {
-            return $value ? '🔓' : '🔒';
-        }
-        if (str_contains($n, 'alarm')) {
-            return $value ? '🚨' : '🔕';
-        }
-        return '';
-    }
-
-    /** Liest die Assoziationsfarbe des aktuellen Werts aus dem Variablenprofil (z.B. rot fuer "Alarm"), null wenn kein passendes/gefaerbtes Profil existiert. */
-    private function associationColor(int $varId): ?string
-    {
-        $var = @IPS_GetVariable($varId);
-        if ($var === false) {
-            return null;
-        }
-        $profileName = $var['VariableCustomProfile'] !== '' ? $var['VariableCustomProfile'] : $var['VariableProfile'];
-        if ($profileName === '' || !@IPS_VariableProfileExists($profileName)) {
-            return null;
-        }
-        $profile = IPS_GetVariableProfile($profileName);
-        $value   = GetValue($varId);
-        foreach ($profile['Associations'] as $assoc) {
-            if ((string) $assoc['Value'] === (string) $value && (int) $assoc['Color'] >= 0) {
-                return sprintf('#%06X', (int) $assoc['Color']);
-            }
-        }
-        return null;
-    }
-
-    /** Fremde HTML-Inhalte (z.B. die Unwetterwarnung-Tabelle) bekommen ein Dark-Theme-Overlay, damit kein weißer/schwarzer Fremdkoerper in der Kachel erscheint. */
-    private function darkThemeWrap(string $rawHtml): string
-    {
-        return '<style>html,body{background:#0d1b2a !important;color:#d0e8ff !important;margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:12px}'
-            . 'a{color:#7ec8f0 !important} table{color:#d0e8ff !important;width:100%}</style>' . $rawHtml;
-    }
-
-    /** [[unixTimestamp, value], ...], aeltester zuerst -- leer wenn nicht archiviert. */
-    private function history(int $varId): array
-    {
-        $archiveID = $this->ReadPropertyInteger('archive_instance');
-        if ($archiveID <= 0 || $varId <= 0 || !function_exists('AC_GetLoggedValues')) {
-            return [];
-        }
-        $now = time();
-        try {
-            $rows = @AC_GetLoggedValues($archiveID, $varId, $now - self::CHART_SPAN_SEC, $now, 0);
-        } catch (\Throwable $e) {
-            return [];
-        }
-        if (!is_array($rows) || empty($rows)) {
-            return [];
-        }
-        $points = [];
-        foreach (array_reverse($rows) as $row) { // AC_GetLoggedValues liefert neueste zuerst
-            $points[] = [(int) $row['TimeStamp'], (float) $row['Value']];
-        }
-        return $points;
-    }
-
-    /** SVG-Polyline-Punkte, skaliert in eine 300x60-Box; '' wenn zu wenig Historie. */
-    private function chartSvgPoints(int $varId): string
-    {
-        $history = $this->history($varId);
-        if (count($history) < 2) {
-            return '';
-        }
-        $viewW   = 300.0;
-        $viewH   = 60.0;
-        $startTs = time() - self::CHART_SPAN_SEC;
-        $values  = array_column($history, 1);
-        $min     = min($values);
-        $max     = max($values);
-        if ($max - $min < 0.01) {
-            $mid = ($max + $min) / 2;
-            $min = $mid - 0.5;
-            $max = $mid + 0.5;
-        }
-        $pad = ($max - $min) * 0.15;
-        $min -= $pad;
-        $max += $pad;
-
-        $pts = [];
-        foreach ($history as [$ts, $val]) {
-            $x     = max(0, min($viewW, ($ts - $startTs) / self::CHART_SPAN_SEC * $viewW));
-            $y     = $viewH - (($val - $min) / ($max - $min)) * $viewH;
-            $pts[] = round($x, 1) . ',' . round($y, 1);
-        }
-        return implode(' ', $pts);
-    }
-
-    private function pushValue(string $key, $value): void
-    {
-        $this->UpdateVisualizationValue(json_encode(['key' => $key, 'value' => $value]));
-    }
-
-    // ─── Rendering ──────────────────────────────────────────────────────────────
+    // ─── Rendering (TileKit, siehe docs/ui-kachel.md im Workspace) ─────────────
 
     private function buildDashboardHTML(): string
     {
-        $d = $this->collectData();
-
-        $tilesHtml = '';
+        $d    = $this->collectData();
+        $body = '';
         foreach ($d['tiles'] as $tile) {
-            $tilesHtml .= $this->renderTile($tile);
+            $body .= $this->renderTile($tile);
         }
-
-        $updatedEsc = htmlspecialchars($d['updated'], ENT_QUOTES);
-        $initJson   = json_encode($d);
-
-        return <<<HTML
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-html{height:100%}
-*{box-sizing:border-box;margin:0;padding:0}
-body{overflow-y:auto;overflow-x:hidden;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;background:#0d1b2a;color:#d0e8ff;display:flex;flex-direction:column;padding:8px;gap:8px}
-.header{display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:13px;font-weight:600;border-bottom:1px solid #1e3a5f;padding-bottom:5px;flex:none}
-.updated{font-size:10px;color:#3a5a7a;font-weight:400}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:7px;align-items:stretch}
-.group-header{grid-column:1 / -1;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#7ec8f0;border-bottom:1px solid #1e3a5f;padding:4px 2px 3px;margin-top:4px}
-.group-header:first-child{margin-top:0}
-.tile{background:#131f33;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;justify-content:center;gap:4px;min-height:0}
-.tile-name{font-size:10.5px;color:#8aa8c8;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.25;overflow-wrap:anywhere}
-.tile-value{font-size:19px;font-weight:600;color:#d0e8ff;line-height:1.15}
-.tile-chart{margin-top:1px}
-.tile-chart svg{width:100%;height:24px;display:block}
-.tile-row{display:flex;align-items:center;justify-content:space-between;gap:6px}
-.tile-text{font-size:14px;color:#d0e8ff}
-/* Kompakte Kacheln fuer Status/Text (Bool/String) -- keine verschachtelte Box, Farbe direkt am Text.
-   Name oben (bis zu 2 Zeilen), Status darunter -- nicht nebeneinander, damit lange Werte wie
-   "Nicht ausgelöst" nie aus der Kachel herauslaufen. */
-.tile-compact{padding:9px 12px;gap:2px}
-.tile-compact .tile-name{font-size:11.5px}
-.tile-status{font-size:13px;font-weight:600;color:#8aa8c8;overflow-wrap:anywhere}
-/* Klickbare Kacheln (Schalter/Ausloeser): die ganze Flaeche ist der Button, kein eingebetteter Zweit-Button. */
-.tile.clickable{cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;transition:background-color .15s,transform .08s;border:1px solid #1e3a5f}
-.tile.clickable:active{transform:scale(.97)}
-.tile.toggle-tile{padding:10px 12px;min-height:58px}
-.tile.toggle-tile .tile-row{margin-top:auto}
-.tile.toggle-tile .tile-icon{font-size:15px;color:#4a6a8a;flex:none;transition:color .15s}
-.tile.toggle-tile.on{background:#12405a;border-color:#2a7aa0}
-.tile.toggle-tile.on .tile-icon{color:#7ec8f0}
-.tile.toggle-tile.on .tile-status{color:#d0e8ff}
-.tile.action-tile{align-items:center;justify-content:center;text-align:center;gap:6px;background:#12405a;border-color:#2a7aa0;min-height:72px}
-.tile.action-tile .tile-icon{font-size:22px;color:#7ec8f0}
-.tile.action-tile .tile-name{font-size:11px;color:#9fc8e8;-webkit-line-clamp:2}
-.tile.action-tile:active{background:#17547a}
-.tile-html{grid-column:1 / -1;background:#131f33;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:4px}
-.tile-html iframe{width:100%;border:0;min-height:100px;border-radius:6px}
-.topic-icon{font-size:12px;margin-right:4px;opacity:.85;filter:grayscale(.15)}
-</style>
-</head>
-<body>
-<div class="header">
-  <span>🏠 {$this->Translate('Home Dashboard')}</span>
-  <span id="updated" class="updated">{$this->Translate('Stand')} {$updatedEsc}</span>
-</div>
-<div class="grid">
-{$tilesHtml}
-</div>
-<script>
-var state = {$initJson};
-
-function setText(id, text) {
-  var el = document.getElementById(id);
-  if (el) el.textContent = text;
-}
-
+        $js = <<<'JS'
+var lastHtml = {};
+(state.tiles || []).forEach(function (t) { if (t.type === 'html') lastHtml[t.ident] = t.html; });
 function updateTile(t) {
-  if (t.type === 'value' || t.type === 'bool' || t.type === 'string' || t.type === 'toggle') {
-    setText(t.ident + '_val', t.text);
-  }
   if (t.type === 'value') {
-    var poly = document.getElementById(t.ident + '_poly');
+    tk.setText(t.ident + '_val', t.text);
+    var poly = tk.el(t.ident + '_poly');
     if (poly && t.chart) poly.setAttribute('points', t.chart);
-  }
-  if (t.type === 'bool') {
-    var statusEl = document.getElementById(t.ident + '_status');
-    if (statusEl) statusEl.style.color = t.color || '#8aa8c8';
-    setText(t.ident + '_icon', t.icon || '');
-  }
-  if (t.type === 'toggle') {
-    var input = document.getElementById(t.ident + '_input');
-    if (input) input.checked = t.checked;
-    var card = document.getElementById(t.ident + '_card');
-    if (card) card.classList.toggle('on', !!t.checked);
+  } else if (t.type === 'bool') {
+    tk.setText(t.ident + '_val', t.text);
+    tk.setColor(t.ident + '_status', t.color);
+    tk.setText(t.ident + '_icon', t.icon || '');
+  } else if (t.type === 'toggle') {
+    tk.setText(t.ident + '_val', t.text);
+    tk.setOn(t.ident + '_card', t.checked);
+  } else if (t.type === 'string') {
+    tk.setText(t.ident + '_val', t.text);
+  } else if (t.type === 'html' && lastHtml[t.ident] !== t.html) {
+    // Nur bei geaendertem Inhalt neu laden (sonst flackert das iframe bei jedem Push)
+    lastHtml[t.ident] = t.html;
+    var f = tk.el(t.ident + '_frame');
+    if (f) f.srcdoc = f.srcdoc.replace(/<\/style>[\s\S]*$/, '</style>') + t.html;
   }
 }
-
-function toggleTile(ident) {
-  var input = document.getElementById(ident + '_input');
-  var card = document.getElementById(ident + '_card');
-  var next = input ? !input.checked : true;
-  if (input) input.checked = next;
-  if (card) card.classList.toggle('on', next);
-  requestAction(ident + '_toggle', next);
-}
-
-window.handleMessage = function(raw) {
-  var msg = JSON.parse(raw);
-  if (msg.key !== '__all__') return;
-  var val = msg.value;
-  state = val;
-  setText('updated', val.updated);
-  for (var i = 0; i < val.tiles.length; i++) {
-    updateTile(val.tiles[i]);
-  }
-};
-</script>
-</body>
-</html>
-HTML;
+tk.on('__all__', function (v) { state = v; v.tiles.forEach(updateTile); });
+JS;
+        return $this->tkPage($this->Translate('Home Dashboard'), '🏠', $d['updated'], "<div class=\"tk-grid\">{$body}</div>", '', $js, json_encode($d));
     }
 
     private function renderTile(array $tile): string
     {
-        $ident   = $tile['ident'];
-        $nameEsc = htmlspecialchars($tile['name'], ENT_QUOTES);
-        $type    = $tile['type'];
-
-        switch ($type) {
+        $ident = $tile['ident'];
+        $name  = $tile['name'];
+        switch ($tile['type']) {
             case 'group':
-                return "<div class=\"group-header\">{$nameEsc}</div>";
-
+                return self::tkGroup($name);
             case 'value':
-                $textEsc = htmlspecialchars($tile['text'], ENT_QUOTES);
-                $chart   = $tile['chart'] !== ''
-                    ? "<div class=\"tile-chart\"><svg viewBox=\"0 0 300 60\" preserveAspectRatio=\"none\"><polyline id='{$ident}_poly' points=\"{$tile['chart']}\" fill=\"none\" stroke=\"#7ec8f0\" stroke-width=\"2\"/></svg></div>"
-                    : '';
-                return "<div class=\"tile\"><div class=\"tile-name\">{$nameEsc}</div><div id='{$ident}_val' class=\"tile-value\">{$textEsc}</div>{$chart}</div>";
-
+                return self::tkValueTile($ident, $name, $tile['text'], $tile['chart']);
             case 'bool':
-                $textEsc = htmlspecialchars($tile['text'], ENT_QUOTES);
-                $color   = $tile['color'] ?? '#8aa8c8';
-                $iconEsc = htmlspecialchars($tile['icon'] ?? '', ENT_QUOTES);
-                return "<div class=\"tile tile-compact\"><span class=\"tile-name\">{$nameEsc}</span><span id='{$ident}_status' class=\"tile-status\" style=\"color:{$color}\"><span id='{$ident}_icon' class=\"topic-icon\">{$iconEsc}</span><span id='{$ident}_val'>{$textEsc}</span></span></div>";
-
+                return self::tkStatusTile($ident, $name, $tile['text'], $tile['icon'] ?? '', '', $tile['color'] ?? null);
             case 'toggle':
-                $textEsc  = htmlspecialchars($tile['text'], ENT_QUOTES);
-                $checked  = $tile['checked'] ? ' checked' : '';
-                $onClass  = $tile['checked'] ? ' on' : '';
-                return <<<HTML
-<div class="tile clickable toggle-tile{$onClass}" id="{$ident}_card" onclick="toggleTile('{$ident}')">
-  <span class="tile-name">{$nameEsc}</span>
-  <span class="tile-row" style="gap:8px">
-    <span id='{$ident}_val' class="tile-status">{$textEsc}</span>
-    <span class="tile-icon">⏻</span>
-  </span>
-  <input id='{$ident}_input' type="checkbox"{$checked} style="display:none">
-</div>
-HTML;
-
+                return self::tkToggleTile($ident, $name, (bool) $tile['checked'], $tile['text']);
             case 'action':
-                return "<div class=\"tile clickable action-tile\" onclick=\"requestAction('{$ident}_action', 1)\"><span class=\"tile-icon\">▶</span><span class=\"tile-name\">{$nameEsc}</span></div>";
-
+                return self::tkActionTile($ident, $ident . '_action', $name);
             case 'string':
-                $textEsc = htmlspecialchars($tile['text'], ENT_QUOTES);
-                return "<div class=\"tile tile-compact\"><span class=\"tile-name\">{$nameEsc}</span><span id='{$ident}_val' class=\"tile-status\">{$textEsc}</span></div>";
-
+                return self::tkStatusTile($ident, $name, $tile['text']);
             case 'html':
-                $srcDoc = htmlspecialchars($tile['html'], ENT_QUOTES);
-                return "<div class=\"tile-html\"><div class=\"tile-name\">{$nameEsc}</div><iframe srcdoc=\"{$srcDoc}\"></iframe></div>";
-
+                return self::tkHtmlTile($ident, $name, $tile['html']);
             default:
                 return '';
         }
