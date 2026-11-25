@@ -34,7 +34,7 @@ trait TileKit
         $baseJs     = self::tkJs();
         return <<<HTML
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -87,11 +87,11 @@ button,input,select{font:inherit;color:inherit}
 .tk-group:first-child{margin-top:0}
 /* Kachel */
 .tk-tile{background:var(--tk-surface);border:1px solid transparent;border-radius:var(--tk-radius);padding:9px 12px;display:flex;flex-direction:column;justify-content:center;gap:3px;min-height:58px;min-width:0}
-.tk-name{font-size:var(--tk-fs-label);color:var(--tk-muted);line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
-.tk-value{font-size:var(--tk-fs-value);font-weight:600;color:var(--tk-text);line-height:1.15;overflow-wrap:anywhere}
+.tk-name{font-size:var(--tk-fs-label);color:var(--tk-muted);line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto}
+.tk-value{font-size:var(--tk-fs-value);font-weight:600;color:var(--tk-text);line-height:1.15;overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto}
 .tk-unit{font-size:var(--tk-fs-body);font-weight:500;color:var(--tk-muted);margin-left:2px}
-.tk-status{font-size:var(--tk-fs-body);font-weight:600;color:var(--tk-muted);overflow-wrap:anywhere;line-height:1.25}
-.tk-text{font-size:var(--tk-fs-text);color:var(--tk-text);overflow-wrap:anywhere}
+.tk-status{font-size:var(--tk-fs-body);font-weight:600;color:var(--tk-muted);overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto;line-height:1.25}
+.tk-text{font-size:var(--tk-fs-text);color:var(--tk-text);overflow-wrap:break-word;hyphens:auto;-webkit-hyphens:auto}
 .tk-sub{font-size:var(--tk-fs-meta);color:var(--tk-dim);overflow-wrap:anywhere}
 .tk-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .tk-topic{margin-right:4px;opacity:.85;filter:grayscale(.15)}
@@ -113,6 +113,9 @@ button,input,select{font:inherit;color:inherit}
 .tk-click.tk-on .tk-status{color:var(--tk-text)}
 .tk-click .tk-row{margin-top:auto}
 .tk-click.tk-busy{opacity:.6}
+/* Alarm schlaegt An-Zustand (z. B. aktive Sirene), Alarmtext immer hell auf Rot */
+.tk-tile.tk-is-alarm,.tk-click.tk-on.tk-is-alarm{background:var(--tk-alarm-bg);border-color:var(--tk-alarm-border)}
+.tk-tile.tk-is-alarm .tk-status,.tk-tile.tk-is-alarm .tk-status.tk-alarm,.tk-tile.tk-is-alarm .tk-icon{color:#ffd0c8 !important}
 .tk-action{align-items:center;justify-content:center;text-align:center;gap:6px;background:var(--tk-on);border-color:var(--tk-border-on)}
 .tk-action .tk-icon{font-size:var(--tk-fs-icon);color:var(--tk-accent)}
 .tk-action .tk-name{color:var(--tk-accent-2)}
