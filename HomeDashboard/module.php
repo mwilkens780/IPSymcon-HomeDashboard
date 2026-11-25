@@ -32,49 +32,34 @@ class HomeDashboard extends IPSModule
     ];
 
     /**
-     * Vorbelegung mit den auf dieser Installation tatsaechlich vorhandenen
-     * Root-Objekten (per Live-Objektbaum ermittelt, nicht geraten) -- damit
-     * die Kachel sofort nutzbar ist statt mit einer leeren Liste zu starten.
-     * Der Nutzer kann Zeilen jederzeit entfernen/ergaenzen.
+     * Allgemeine Beispiel-Vorbelegung: zeigt je Kacheltyp einen Eintrag, damit
+     * die Liste nicht leer startet. Variablen/Skripte sind nicht zugeordnet
+     * (0) und werden im Konfigurationsformular ausgewaehlt; Zeilen koennen
+     * jederzeit entfernt oder ergaenzt werden.
      */
     private const DEFAULT_TILES = [
-        ['name' => 'Anwesenheit',              'variable' => 0,     'script' => 0,     'type' => 'group'],
-        ['name' => 'Zuhause (alle)',           'variable' => 15106, 'script' => 0,     'type' => 'toggle'],
-        ['name' => 'Anwesend: Person 1',         'variable' => 42942, 'script' => 0,     'type' => 'toggle'],
-        ['name' => 'Anwesend: Person 2',          'variable' => 26353, 'script' => 0,     'type' => 'toggle'],
-        ['name' => 'Anwesend: Person 3',          'variable' => 33952, 'script' => 0,     'type' => 'toggle'],
-        ['name' => 'Anwesend: Person 4',          'variable' => 56923, 'script' => 0,     'type' => 'toggle'],
+        ['name' => 'Anwesenheit',              'variable' => 0, 'script' => 0, 'type' => 'group'],
+        ['name' => 'Zuhause (alle)',           'variable' => 0, 'script' => 0, 'type' => 'toggle'],
+        ['name' => 'Anwesend: Person 1',       'variable' => 0, 'script' => 0, 'type' => 'toggle'],
 
-        ['name' => 'Steuerung',                'variable' => 0,     'script' => 0,     'type' => 'group'],
-        ['name' => 'Erdgeschoss Licht',        'variable' => 44101, 'script' => 0,     'type' => 'toggle'],
-        ['name' => 'Obergeschoss Licht',       'variable' => 34031, 'script' => 0,     'type' => 'toggle'],
-        ['name' => 'Bewässerung',              'variable' => 0,     'script' => 19701, 'type' => 'action'],
+        ['name' => 'Steuerung',                'variable' => 0, 'script' => 0, 'type' => 'group'],
+        ['name' => 'Licht Erdgeschoss',        'variable' => 0, 'script' => 0, 'type' => 'toggle'],
+        ['name' => 'Bewässerung starten',      'variable' => 0, 'script' => 0, 'type' => 'action'],
 
-        ['name' => 'Energie',                  'variable' => 0,     'script' => 0,     'type' => 'group'],
-        ['name' => 'Stromverbrauch',           'variable' => 14487, 'script' => 0,     'type' => 'value'],
-        ['name' => 'Leistung Solar',           'variable' => 22328, 'script' => 0,     'type' => 'value'],
+        ['name' => 'Energie',                  'variable' => 0, 'script' => 0, 'type' => 'group'],
+        ['name' => 'Stromverbrauch',           'variable' => 0, 'script' => 0, 'type' => 'value'],
 
-        ['name' => 'Wetter',                   'variable' => 0,     'script' => 0,     'type' => 'group'],
-        ['name' => 'Außentemperatur',          'variable' => 30589, 'script' => 0,     'type' => 'value'],
-        ['name' => 'Regen heute',              'variable' => 42136, 'script' => 0,     'type' => 'value'],
-        ['name' => 'Sonnenschein heute',       'variable' => 48955, 'script' => 0,     'type' => 'value'],
-        ['name' => 'Aktueller Niederschlag',   'variable' => 10262, 'script' => 0,     'type' => 'bool'],
-        ['name' => 'Aktueller Sonnenschein',   'variable' => 22740, 'script' => 0,     'type' => 'bool'],
+        ['name' => 'Wetter',                   'variable' => 0, 'script' => 0, 'type' => 'group'],
+        ['name' => 'Außentemperatur',          'variable' => 0, 'script' => 0, 'type' => 'value'],
+        ['name' => 'Regen',                    'variable' => 0, 'script' => 0, 'type' => 'bool'],
 
-        ['name' => 'Alarme',                   'variable' => 0,     'script' => 0,     'type' => 'group'],
-        ['name' => 'Batterie-Alarm',           'variable' => 51665, 'script' => 0,     'type' => 'bool'],
-        ['name' => 'Feuer-Alarm',              'variable' => 51344, 'script' => 0,     'type' => 'bool'],
-        ['name' => 'Geräte-Status',            'variable' => 46955, 'script' => 0,     'type' => 'bool'],
-        ['name' => 'Alarm Feuer (CCU)',        'variable' => 26043, 'script' => 0,     'type' => 'bool'],
-        ['name' => 'Alarm Wasser (CCU)',       'variable' => 42541, 'script' => 0,     'type' => 'bool'],
-        ['name' => 'Alarm Batterie (CCU)',     'variable' => 49719, 'script' => 0,     'type' => 'bool'],
-        ['name' => 'Fensteröffnung unten',     'variable' => 45202, 'script' => 0,     'type' => 'bool'],
-        ['name' => 'Fensteröffnung oben',      'variable' => 58303, 'script' => 0,     'type' => 'bool'],
-        ['name' => 'Wasser-Alarm',             'variable' => 51828, 'script' => 0,     'type' => 'bool'],
+        ['name' => 'Alarme',                   'variable' => 0, 'script' => 0, 'type' => 'group'],
+        ['name' => 'Rauchmelder',              'variable' => 0, 'script' => 0, 'type' => 'bool'],
+        ['name' => 'Fenster offen',            'variable' => 0, 'script' => 0, 'type' => 'bool'],
 
-        ['name' => 'Sonstiges',                'variable' => 0,     'script' => 0,     'type' => 'group'],
-        ['name' => 'Ferien',                   'variable' => 18598, 'script' => 0,     'type' => 'string'],
-        ['name' => 'Warnmeldungen',            'variable' => 28250, 'script' => 0,     'type' => 'html'],
+        ['name' => 'Sonstiges',                'variable' => 0, 'script' => 0, 'type' => 'group'],
+        ['name' => 'Hinweis',                  'variable' => 0, 'script' => 0, 'type' => 'string'],
+        ['name' => 'Warnmeldungen',            'variable' => 0, 'script' => 0, 'type' => 'html'],
     ];
 
     // ─── Lifecycle ──────────────────────────────────────────────────────────────
@@ -84,8 +69,7 @@ class HomeDashboard extends IPSModule
         parent::Create();
 
         $this->RegisterPropertyString('tiles', json_encode(self::DEFAULT_TILES));
-        // Gleiche Archiv-Instanz wie Weather/Energy/Heating Dashboard auf dieser Installation.
-        $this->RegisterPropertyInteger('archive_instance', 59233);
+        $this->RegisterPropertyInteger('archive_instance', 0); // Archive Control, fuer die Verlaufslinien
         $this->RegisterPropertyInteger('update_interval', 60);
 
         $this->RegisterTimer('UpdateTimer', 0, 'HMD_Refresh($_IPS[\'TARGET\']);');
